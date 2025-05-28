@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Platform - Streaming de Música</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="visualizer"></div>
+    
+    <div class="container">
+        <header class="header">
+            <div class="logo">MusicStream</div>
+            <div class="nav-controls">
+                <div id="user-info" class="hidden">
+                    <span id="user-name"></span>
+                    <button class="btn btn-secondary" onclick="logout()">Salir</button>
+                </div>
+                <div id="auth-buttons">
+                    <button class="btn btn-secondary" onclick="openModal('login')">Iniciar Sesión</button>
+                    <button class="btn btn-primary" onclick="openModal('register')">Registrarse</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <aside class="sidebar">
+                <h3>Menú</h3>
+                <ul>
+                    <li class="active" onclick="showSection('home')">Inicio</li>
+                    <li onclick="showSection('upload')" id="upload-menu" class="hidden">Subir Música</li>
+                    <li onclick="showSection('my-music')" id="my-music-menu" class="hidden">Mi Música</li>
+                    <li onclick="showSection('playlists')" id="playlists-menu" class="hidden">Playlists</li>
+                    <li onclick="showSection('search')">Buscar</li>
+                </ul>
+            </aside>
+
+            <main class="content-area">
+                <!-- Home Section -->
+                <div id="home-section" class="section">
+                    <h2>Bienvenido a MusicStream</h2>
+                    <p>Descubre, reproduce y comparte tu música favorita</p>
+                    
+                    <div class="search-container">
+                        <input type="text" class="search-input" placeholder="Buscar canciones, artistas..." id="main-search">
+                    </div>
+                    
+                    <h3>Canciones Populares</h3>
+                    <div id="music-grid" class="music-grid">
+                        <!-- Las canciones se cargarán dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- Upload Section -->
+                <div id="upload-section" class="section hidden">
+                    <h2>Subir Nueva Canción</h2>
+                    <form class="upload-form" id="upload-form">
+                        <div class="form-group">
+                            <label>Archivo de Audio (MP3)</label>
+                            <input type="file" id="audio-file" class="file-input" accept="audio/mp3" required>
+                            <label for="audio-file" class="file-label">
+                                Seleccionar archivo MP3
+                            </label>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="song-title">Título de la Canción</label>
+                            <input type="text" id="song-title" placeholder="Ej: Bohemian Rhapsody" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="song-artist">Artista</label>
+                            <input type="text" id="song-artist" placeholder="Ej: Queen" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="song-album">Álbum</label>
+                            <input type="text" id="song-album" placeholder="Ej: A Night at the Opera">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            Subir Canción
+                        </button>
+                    </form>
+                </div>
+
+                <!-- My Music Section -->
+                <div id="my-music-section" class="section hidden">
+                    <h2>Mi Música</h2>
+                    <div id="my-music-grid" class="music-grid">
+                        <!-- Canciones del usuario -->
+                    </div>
+                </div>
+
+                <!-- Playlists Section -->
+                <div id="playlists-section" class="section hidden">
+                    <h2>Mis Playlists</h2>
+                    <button class="btn btn-primary" onclick="createPlaylist()">Nueva Playlist</button>
+                    <div id="playlists-grid" class="music-grid">
+                        <!-- Playlists del usuario -->
+                    </div>
+                </div>
+
+                <!-- Search Section -->
+                <div id="search-section" class="section hidden">
+                    <h2>Buscar Música</h2>
+                    <div class="search-container">
+                        <input type="text" class="search-input" placeholder="Buscar por título, artista o álbum..." id="search-input">
+                    </div>
+                    <div id="search-results" class="music-grid">
+                        <!-- Resultados de búsqueda -->
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Player -->
+    <div id="player" class="player">
+        <div class="player-content">
+            <div class="player-info">
+                <div>
+                    <div id="player-title">Título</div>
+                    <div id="player-artist">Artista</div>
+                </div>
+            </div>
+            
+            <div class="player-controls">
+                <button class="control-btn" onclick="previousSong()">⏮️</button>
+                <button class="control-btn play-btn" onclick="togglePlay()" id="play-btn">▶️</button>
+                <button class="control-btn" onclick="nextSong()">⏭️</button>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" onclick="seek(event)">
+                    <div class="progress" id="progress"></div>
+                </div>
+            </div>
+            
+            <div class="volume-control">
+                <span>🔊</span>
+                <input type="range" class="volume-slider" min="0" max="100" value="50" id="volume-slider">
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Modals -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('login')">&times;</span>
+            <h2>Iniciar Sesión</h2>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" placeholder="tu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Contraseña</label>
+                    <input type="password" id="login-password" placeholder="Tu contraseña" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    Iniciar Sesión
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="register-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('register')">&times;</span>
+            <h2>Registrarse</h2>
+            <form id="register-form">
+                <div class="form-group">
+                    <label for="register-name">Nombre</label>
+                    <input type="text" id="register-name" placeholder="Tu nombre completo" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-email">Email</label>
+                    <input type="email" id="register-email" placeholder="tu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-password">Contraseña</label>
+                    <input type="password" id="register-password" placeholder="Mínimo 6 caracteres" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-confirm">Confirmar Contraseña</label>
+                    <input type="password" id="register-confirm" placeholder="Repite tu contraseña" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    Registrarse
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <audio id="audio-player" preload="metadata"></audio>
+
+    <script src="script.js"></script>
+</body>
+</html>
